@@ -1,55 +1,99 @@
-# Načtení dat
-Nahrál jsem soubory/faktové tabulky: 
-- kzt6p.csv
-- sldb2021_vek10_pohlavi.csv
+# Semestrální práce KIV/INS - Zpracování dat krajských voleb 2020
 
-Nahrál jsem soubory/dimenzní tabulky: 
-- cisob.csv
-- kzcoco.csv
-- kzciskr.csv
-- kzrkl.csv
+## Cíl semestrální práce
+Cílem semestrální práce bylo zpracování dat z krajských voleb 2020 a sčítání obyvatelstva z roku 2021. Dalším cílem bylo nalezení případné závislosti mezi výsledkem voleb a věkem obyvatelstva v regionech.
 
-Využil jsem pro to definování parametru `Data_složka` abych nemusel u každé tabulky měnit a absolutní cestu.
+## Datové sady
+Datové sady se nacházejí ve složce `data`. Nejdůležitějšími jsou výsledky krajských voleb a sčítání obyvatelstva, kdy jsou záznamy rozděleny do 10 letých věkových skupin a také podle pohlaví. Tvůrcem datových sad je Český statistický úřad. K dispozici jsou také datové sady se stejným obsahem z jiných let.
+V tabulce níže jsou uvedené jednotlivé soubory/tabulky a parametry které byly využity při zpracování dat 
 
-# Úprava tabulky sčítání obyvatelstva
-- kopie originálu
-- přejmenování sloupců (uzemi_kod -> Území kód, vek_txt -> Věková skupina, uzemi_text -> Území text, hodnota -> Počet obyvatel)
-- Odstranění zbytečných sloupců
-- Přeuspořádání sloupců
-- Odstranění prázdných řádek ze sloupce Věková skupina
-- Group By: Sum sloupce Počet obyvatel nový sloupec Počet věk (zanechány zbylé sloupce)
-- Odstranění textu ze sloupce Věková skupina pomocí rozdělení sloupce podle čísel na dva a smazání druhé sloupce s textem
-- Vytvoření nového sloupce s věkovými skupinami (0-17, 18-29, 30-59, 60+)
-- Pivot Column -> Věková skupina (Don´t agregate) podle Počet obyvatel
-- Vytvoření sloupce počet obyvatel 
+| Tabulka/Soubor | Popis souboru | Důležité parametry |
+|----------------|---------------|--------------------|
+| `kzt6p.csv`| Volební výsledky | `OKRES`, `OBEC`, `KSTRANA`, `POC_HLASU` |
+| `sldb2021_vek10_pohlavi.csv`| Sčítání obyvatelstva věkové skupiny po 10 letech a pohlaví | `hodnota`, `uzemi_kod`, `vek_txt`, `uzemi_txt` |
+| `kzkrl.csv` | Registr kandidátních listin | `KSTRANA`, `NAZEVCELK`, `ZKRATKA8` |
+| `kzcoco.csv` | Číselník obcí | `KRAJ`, `OKRES`, `ORP`, `OBEC`, `NAZEVOBCE` |
+| `kzciskr.csv` | Číselník krajů | `KRAJ`, `NAZEVKRZ` |
+| `cnumnuts.csv` | Názvy krajů (NUTS) | `NUMNUTS`, `NAZEVNUTS` |
+| `CIS0065_CS.csv` | Číselník ORP| `chhodnota`, `text` |
+
+Většina tabulek je přirozeně propojitelná nejčastěji pomocí kódu LAU nebo NUTS. 
+Například tabulka `cnumnuts.csv` je propojitelá pomocí atributu **NUMNUTS** s tabulkou `kzt6p.csv` přes atribut **OKRES**
+
+![Ukázka číselníku NUTS](./img/NUTS.png)
+
+## Transformace dat
+### Tabulka sčítání obyvatelstva (`sldb2021_vek10_pohlavi.csv`)
+Prvním krokem při úpravě dat v tabulce sčítání obyvatelstva bylo odstranění prázdných hodnot u atributu `vek_txt`. Dalším krokem bylo odstranění přebytečných sloupců, které byly pro naše řešení nerelevantní: `idhod`, `ukaz_kod`, `vek_cis`, `vek_kod`, `pohlavi_cis`, `pohlavi_kod`, `uzemi_cis`, `sldb_rok`, `sldb_datum`, `ukaz_txt`, `pohlavi_txt`
+
+Následně došlo k přejmenování a přeuspořádní pořadí sloupců:
+- `hodnota` -> `Počet obyvatel`
+- `uzemi_kod` -> `Území kód`
+- `vek_txt` -> `Věková skupina`
+- `uzemi_text` -> `Území text`
+
+Další oprací provedenou nad daty byla operace **Group By**, kdy došlo k součtu počtu obyvatel podle dané věkové skupiny, územního kódu a textu. Poté jsme využili operaci **Pivot Column**  podle atributu `Věková skupina` s nastavením **Don´t agregate** podle Počtu obyvatel. Tudíž nám vznikly nové sloupce podle jednotlivých 10 letých skupin. Poté jsme také vytvořili nový sloupec pro věkovou skupinu `60 let a více`, který vznikl součtem hodnot ze sloupců `60 - 69 let`, `70 - 79 let`, `80 - 89 let`, `90 - 99 let` a `100 a více let`. Následně zmíněné sloupce byli odstraněny. Pro tuto operaci jsme se rozhodli z důvodu zanedbatelného vlivu na následnou analýzu a zmenšení tabulky sčítání obyvatelstva. Posledním krokem bylo vytvoření sloupce `Počet obyvatel`, který díky pivotaci zmizel. 
+
+### Tabulka výsledky voleb (`kzt6p.csv`)
+První operací nad touto tabulkou bylo ddstranění pro nás nepodstatných sloupců, kdy byly zachovány tyto sloupce: `OKRES`, `OBEC`, `KSTRANA`, `POC_HLASU`. Dalším krokem bylo opět přejmenování jednotlivých atributů:
+  - `OKRES` -> `Okres kód`
+  - `OBEC` -> `Obec kód` 
+  - `KSTRANA` -> `ID Strany`
+  - `POC_HLASU` -> `Počet Hlasů`
+  
+Konečnou operací nad tabulkou výsledky voleb byla provedení operace **GroupBy*, kdy došlo k součtu hlasů pro jednotlivé strany podle sloupců `Okres kód`, `Obec kód`, `ID strany`.
 
 
-# Úprava tabulky Výsledky voleb
-- kopie originálu
-- Odstranění zbytečných sloupců zůstaly (OKRES, OBEC, KSTRANA, POC_HLASU)
-- přejmenování sloupců (OKRES -> Okres, OBEC -> Obec, KSTRANA -> ID Strany, POC_HLASU -> Počet Hlasů)
-- GroupBy: Sum sloupce Počet hlasů nový sloupec Počet hlasů (zanechány zbylé sloupce)
+### Spojení tabulek výsledky voleb a sčítání obyvatelstva
+Spojení tabulek sčítání obyvatelstva a výsledků voleb bylo realizováno pomocí operace `Merge` přes sloupec `Obec kód` a `Území kód` a vytvoření nové tabulky výsledky `voleb + sčítání obyvatelstva`
+V této nové faktové tabulce došlo nadále k úpravě věkových skupin obvytel. Nejprve byly odstraněny sloupce s věkovými skupinami `0 - 9 let` a `10 - 19 let` z důvodu, že se nejedná o obyvatele s volebním právem a tudíž jsou nám tato data nepotřebná pro naši analýzu. Dále došlo ke spojení skupin obyvatel do 20 letých věkovýc skupin `20 - 39 let`, `40 - 59 let`, `60 a více let`. K tomuto došlo z důvodu snažší interpretace výsledků, kdy například rozdíl mezi věkovými skupinami `20 - 29 let` a `30 - 39 let`, je z našeho pohledu zanedbatelný.
+Také zde byl vytvořen sloupec `Nejpočetnější skupina voličů` obsahující informaci o nejpočetnější skupině voličů.
+
+Bylo zde také vytvořeno několik **DAX mír**, které vypočítávají data pro vizualizaci.
+
+### Tabulka záznamy stran (`kzkrl.csv`)
+Nejprve došlo k odstranění přebytečných atributů tabulky a byly zachovány tyto atributy `KSTRANA`, `NAZEVCELK`, `ZKRATKAK8`.
+Také zde došlo k přejmenování zachovaných atributů: 
+  - `KSTRANA` -> `ID Strany`
+  - `NAZEVCELK` -> `Název strany`
+  - `ZKRATKAK8` -> `Zkratka strany`
+
+Poslední úpravou této tabulky bylo odstranění duplicitních záznamů, které obsahovaly seznam stran pro každý kraj, ale identifikátor strany byl v každém kraji stejný. Naším cílem bylo vytvoření unikátní seznamu stran.
 
 
-# Spojení tabulek
-- spojení tabulek sčítání obyvatelstva a výsledků voleb přes sloupec Obec kód a Území kód a vytvoření nové tabulky výsledky `voleb + sčítání obyvatelstva`
-- úprava skupin obvytel podle věku spojení skupin obyvatel do skupin 20 - 39, 40 - 59, 60 a více (Není důvod dělit na voliče podle 10 let)
+### Vytvoření tabulky geografie 
+Tabulka geografie vznikla pomocí spojení těctho dimenzních tabulek:
+  -  číselník obcí, městských částí, městských obvodů a volebních okrsků (`kzcoco.csv`)
+  -  číselník krajů (`kzciskr.csv`)
+  -  číselník ORP (`CIS0065_CS.csv`)
+  -  číselník okresů (`cnumnuts.csv`)
 
-# Úprava tabulky Záznamy stran
-- kopie originálu
-- Odstranění zbytečných sloupců zůstaly (KSTRANA, NAZEVCELK, ZKRATKAK8)
-- přejmenování sloupců (KSTRANA -> ID Strany, NAZEVCELK -> Název strany, ZKRATKAK8 -> Zkratka strany)
-- Odstranění duplicit: záznamy pro každý kraj chceme unikátní seznam
+Po spojení tabulek došlo k odstranění přebytečných sloupců pro naše zadání: `CPOU`, `KRZAST`, `MINOKRSEK1`, `MAXOKRSEK1`, `OBEC_PREZ`
 
-# Vytvoření tabulky Geografie
-- Vznik pomocí merge ({číselník obcí, městských částí, městských obvodů a volebních okrsků}, číselník krajů, číselník ORP, číselník okresů)
-- Odstranění zbytečných sloupců (CPOU, KRZAST, MINOKRSEK1, MAXOKRSEK1, OBEC_PREZ)
-- přejmenování sloupců 
-  - KRAJ -> Kraj
-  - číselník kraje.NAZEVKRZ -> Název kraje
-  - OKRES -> Okres
-  - číselník okresů.NAZEVNUTS -> Název okres
-  - ORP -> ORP
-  - číselník ORP.text -> Název ORP
-  - OBEC -> Obec
-  - NAZEVOBCE -> Název obce
+Posledním krokem při tvorbě tabulky geografie bylo přejmenování sloupců: 
+  - `KRAJ` -> `Kraj`
+  - `číselník kraje.NAZEVKRZ` -> `Název kraje`
+  - `OKRES` -> `Okres`
+  - `číselník okresů.NAZEVNUTS` -> `Název okres`
+  - `ORP` -> `ORP`
+  - `číselník ORP.text` -> `Název ORP`
+  - `OBEC` -> `Obec`
+  - `NAZEVOBCE` -> `Název obce`
+
+Po všech úpravách tabulky byly pro tuto tabulku vytvořeny dvě Hierarchie a to `Kraj Hierarchy` a `Název Kraje Hierarchy`, jedna obsahuje číselné kódy oblastí a druhá pouze názvy jednotlivých oblastí. Tyto hierarchie byly vytvořeny z důvodu lepšívizualizace dat.
+
+## ERA model
+Po výše zmíněné transformaci dat byl vytvořen ERA model a byly zde nastaveny vazbi mezi tabulkami především mezi tabulkou **geografie** a **výsledky volby + sčítání obyvatelstva** pomocí atributu `Obec` a `Obec kód`.
+
+![ERA model](./img/ERA.png)
+
+## Závěr
+Výsledky krajských voleb 2020, které byly v rámci této semestrální práce zpracovávány odpovídají oficiálním výsledkům, které zpracoval Český statistický úřad. 
+
+Ověření závislosti mezi volebním výsledkem a nejpočetnější skupinou voličů v regionu nebyla zcela prokázána, jelikož se nedá z jistotou říci, že daná skupina obyvatel volila jednu a tu samou stranu skrze více oblastí. Nejvíce pro potvrzení tohoto závěru vypovídají data z jednotlivých obcí viz obrázek:
+
+![Tabulka výsledků voleb](./img/matice_vysledku_2.png)
+
+Nejtěžší na celé práci bylo pochopení zvolených datasetů, které nemají vždy zcela výstižné schéma ze kterého by bylo na první pohled zřejmé jaké atributy obsahují určitá data.
+
+V průběhu zpracování práce, jsme narazili na problém s datovou sadou `sldb2021_vek1_pohlavi.csv`, kterou jsme původně chtěli používat. Problémem byla absence dat o sšítání obyvatel ve velmi malých obcích. Tato absence nám způsobovala problémy při spojování tabulek sčítání obyvatelstva a výsledků voleb, kdy při spojení chyběli pro určité obce data o věkových skupinách obyvatel.
