@@ -42,6 +42,12 @@ Následně došlo k přejmenování a přeuspořádní pořadí sloupců:
 
 Další operací provedenou nad daty byla operace **Group By**, kdy došlo k součtu počtu obyvatel podle dané věkové skupiny, územního kódu a textu. Poté jsme využili operaci **Pivot Column**  podle atributu `Věková skupina` s nastavením **Don´t agregate** podle Počtu obyvatel. Tudíž nám vznikly nové sloupce podle jednotlivých 10 letých skupin. Poté jsme také vytvořili nový sloupec pro věkovou skupinu `60 let a více`, který vznikl součtem hodnot ze sloupců `60 - 69 let`, `70 - 79 let`, `80 - 89 let`, `90 - 99 let` a `100 a více let`. Následně zmíněné sloupce byli odstraněny. Pro tuto operaci jsme se rozhodli z důvodu zanedbatelného vlivu na následnou analýzu a zmenšení tabulky sčítání obyvatelstva. Posledním krokem bylo vytvoření sloupce `Počet obyvatel`, který díky pivotaci zmizel. 
 
+Zde je uvedena původní podoba tabulky:
+![Ukázka tabulky sčítání obyvatelstva](./img/scitani_obyvatelstva.png)
+
+Výsledná podoba tabulky sčítání obyvatelstva je uvedena zde:
+![Ukázka upravené tabulky sčítání obyvatelstva](./img/scitani_obyvatelstva_uprava.png)
+
 ### Tabulka výsledky voleb (`kzt6p.csv`)
 První operací nad touto tabulkou bylo ddstranění pro nás nepodstatných sloupců, kdy byly zachovány tyto sloupce: `OKRES`, `OBEC`, `KSTRANA`, `POC_HLASU`. Dalším krokem bylo opět přejmenování jednotlivých atributů:
   - `OKRES` -> `Okres kód`
